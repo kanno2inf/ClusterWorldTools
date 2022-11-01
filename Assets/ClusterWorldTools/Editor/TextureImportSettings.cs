@@ -10,6 +10,7 @@ namespace ClusterCreatorCommunity
         public const string PREFS_KEY_TEXTURE_SIZE_MOBILE_SELECTED = PREFS_KEY_PREFIX + "TextureSizeMobile";
         public const string PREFS_KEY_TEXTURE_IMPORT_FORMAT_SELECTED = PREFS_KEY_PREFIX + "TextureImportFormat";
         public const string PREFS_KEY_APPLY_TEXTURE_LIMIT = PREFS_KEY_PREFIX + "ApplyTextureLimit";
+        public const string PREFS_KEY_APPLY_TEXTURE_SIZE_KEEP = PREFS_KEY_PREFIX + "ApplyTextureSizeKeep";
 
         public static int MAX_TEXTURE_SIZE_PC = 2048;
         public static int TEXTURE_SIZE_PC_INDEX = 6;
@@ -17,6 +18,7 @@ namespace ClusterCreatorCommunity
         public static int TEXTURE_SIZE_MOBILE_INDEX = 5;
         public static readonly string[] TEXTURE_SIZE_LIST = { "32", "64", "128", "256", "512", "1024", "2048", "4096"};
         public static bool APPLY_TEXTURE_LIMIT = false;
+        public static bool APPLY_TEXTURE_SIZE_KEEP = true;
 
         public const string PREFS_KEY_CRUNCHED_COMPRESSION = PREFS_KEY_PREFIX + "CrunchedCompression";
         public const string PREFS_KEY_CRUNCHED_COMPRESSION_QUALITY = PREFS_KEY_PREFIX + "CrunchedCompressionQualtiy";
@@ -51,6 +53,7 @@ namespace ClusterCreatorCommunity
             TEXTURE_IMPORTER_FORMAT = TextureFormatIndex2TextureFormat(TEXTURE_IMPORTER_FORMAT_INDEX);
 
             APPLY_TEXTURE_LIMIT = EditorPrefs.GetBool(PREFS_KEY_APPLY_TEXTURE_LIMIT, false);
+            APPLY_TEXTURE_SIZE_KEEP = EditorPrefs.GetBool(PREFS_KEY_APPLY_TEXTURE_SIZE_KEEP, true);
 
             CRUNCHED_COMPRESSION = EditorPrefs.GetBool(PREFS_KEY_CRUNCHED_COMPRESSION, true);
             CRUNCHED_COMPRESSION_QUALITY = EditorPrefs.GetInt(PREFS_KEY_CRUNCHED_COMPRESSION_QUALITY, 50);
@@ -77,7 +80,7 @@ namespace ClusterCreatorCommunity
             EditorGUILayout.LabelField("共通");
             EditorGUILayout.BeginVertical(GUI.skin.box);
             {
-                bool crunchedCompression = EditorGUILayout.Toggle("クランチ圧縮(共通)", ClusterTextureImportSettings.CRUNCHED_COMPRESSION);
+                bool crunchedCompression = EditorGUILayout.Toggle("クランチ圧縮", ClusterTextureImportSettings.CRUNCHED_COMPRESSION);
                 if (crunchedCompression != ClusterTextureImportSettings.CRUNCHED_COMPRESSION)
                 {
                     EditorPrefs.SetBool(ClusterTextureImportSettings.PREFS_KEY_CRUNCHED_COMPRESSION, crunchedCompression);
@@ -86,7 +89,7 @@ namespace ClusterCreatorCommunity
                 }
                 if (crunchedCompression)
                 {
-                    int crunchCompressionQuality = (int)EditorGUILayout.Slider("クランチ圧縮品質(共通)", ClusterTextureImportSettings.CRUNCHED_COMPRESSION_QUALITY, 0, 100);
+                    int crunchCompressionQuality = (int)EditorGUILayout.Slider("クランチ圧縮品質", ClusterTextureImportSettings.CRUNCHED_COMPRESSION_QUALITY, 0, 100);
                     if (crunchCompressionQuality != ClusterTextureImportSettings.CRUNCHED_COMPRESSION_QUALITY)
                     {
                         EditorPrefs.SetInt(ClusterTextureImportSettings.PREFS_KEY_CRUNCHED_COMPRESSION_QUALITY, crunchCompressionQuality);
@@ -94,7 +97,7 @@ namespace ClusterCreatorCommunity
                         settingChanged = true;
                     }
                 }
-                int textureAnisoLevel = (int)EditorGUILayout.Slider("異方性フィルタリング(共通)", ClusterTextureImportSettings.TEXTURE_ANISO_LEVEL, 0, 16);
+                int textureAnisoLevel = (int)EditorGUILayout.Slider("異方性フィルタリング", ClusterTextureImportSettings.TEXTURE_ANISO_LEVEL, 0, 16);
                 if (textureAnisoLevel != ClusterTextureImportSettings.TEXTURE_ANISO_LEVEL)
                 {
                     EditorPrefs.SetInt(ClusterTextureImportSettings.PREFS_KEY_TEXTURE_ANISO_LEVEL, textureAnisoLevel);
@@ -149,7 +152,15 @@ namespace ClusterCreatorCommunity
                 settingChanged = true;
             }
 
-            if(settingChanged && GUILayout.Button("すべて再インポート"))
+            bool applyTextureSizeKeep = EditorGUILayout.Toggle("小さいテクスチャを維持", ClusterTextureImportSettings.APPLY_TEXTURE_SIZE_KEEP);
+            if (applyTextureSizeKeep != ClusterTextureImportSettings.APPLY_TEXTURE_SIZE_KEEP)
+            {
+                EditorPrefs.SetBool(ClusterTextureImportSettings.PREFS_KEY_APPLY_TEXTURE_SIZE_KEEP, applyTextureSizeKeep);
+                ClusterTextureImportSettings.APPLY_TEXTURE_SIZE_KEEP = applyTextureSizeKeep;
+                settingChanged = true;
+            }
+
+            if (settingChanged && GUILayout.Button("すべて再インポート"))
             {
                 if (EditorUtility.DisplayDialog("すべて再インポート", "すべてのアセットを再インポートします\n（時間がかかります）", "OK", "キャンセル"))
                 {
@@ -179,7 +190,7 @@ namespace ClusterCreatorCommunity
 
         public static void OptimizeMainSettings(in TextureImporter importer)
         {
-            importer.maxTextureSize= Mathf.Min(importer.maxTextureSize, ClusterTextureImportSettings.MAX_TEXTURE_SIZE_PC);
+            importer.maxTextureSize = ClusterTextureImportSettings.APPLY_TEXTURE_SIZE_KEEP ? Mathf.Min(importer.maxTextureSize, ClusterTextureImportSettings.MAX_TEXTURE_SIZE_PC) : ClusterTextureImportSettings.MAX_TEXTURE_SIZE_PC;
 
             importer.anisoLevel = ClusterTextureImportSettings.TEXTURE_ANISO_LEVEL;
             importer.crunchedCompression = ClusterTextureImportSettings.CRUNCHED_COMPRESSION;
@@ -194,7 +205,7 @@ namespace ClusterCreatorCommunity
 
             importer.GetPlatformTextureSettings(platform, out maxTextureSize, out textureFormat);
 
-            maxTextureSize = Mathf.Min(maxTextureSize, ClusterTextureImportSettings.MAX_TEXTURE_SIZE_MOBILE);
+            maxTextureSize = ClusterTextureImportSettings.APPLY_TEXTURE_SIZE_KEEP  ? Mathf.Min(maxTextureSize, ClusterTextureImportSettings.MAX_TEXTURE_SIZE_MOBILE) : ClusterTextureImportSettings.MAX_TEXTURE_SIZE_MOBILE; ;
             textureFormat = ClusterTextureImportSettings.TEXTURE_IMPORTER_FORMAT;
 
             importer.SetPlatformTextureSettings(platform, maxTextureSize, textureFormat);
