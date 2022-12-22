@@ -17,6 +17,7 @@ namespace ClusterWorldTools
         { 14, "InteractableItem" },
         { 15, "OtherAvatar" },
         { 16, "OwnAvatar" },
+        { 17, "GrabbableUI" },
         { 18, "GrabbingItem" },
         { 19, "VenueLayer0" },
         { 20, "VenueLayer1" },
@@ -25,6 +26,7 @@ namespace ClusterWorldTools
         { 23, "Performer" },
         { 24, "Audience" },
         { 29, "VenueLayer2" },
+        { 30, "Nameplate" }
     };
 
         [MenuItem("WorldTools/レイヤー自動設定")]
